@@ -17,3 +17,5 @@ venv/
 .vscode/
 .idea/
 
+# Archivos temporales
+*.sqlite3
