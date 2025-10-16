@@ -83,13 +83,14 @@ WSGI_APPLICATION = 'core.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'aprendizaje_autonomo_db',
+        'NAME': 'postgres',
         'USER': 'postgres',
-        'PASSWORD': 'Admin123',
-        'HOST': 'localhost',
+        'PASSWORD': 'SoyLaMeraMonda',
+        'HOST': 'db.yqrpztojaklmpxiympzx.supabase.co',  # cámbialo por tu host
         'PORT': '5432',
     }
 }
+
 
 AUTH_USER_MODEL = 'users.User'
 
