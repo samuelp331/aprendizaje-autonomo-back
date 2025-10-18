@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Registro de Usuario</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        form {
+            background: #fff;
+            padding: 25px;
+            border-radius: 10px;
+            width: 350px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        input, select, button {
+            width: 100%;
+            padding: 8px;
+            margin: 8px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .volver {
+            background: #6c757d;
+            margin-top: 5px;
+        }
+        .volver:hover {
+            background: #5a6268;
+        }
+    </style>
+</head>
+<body>
+    <form method="POST">
+        {% csrf_token %}
+        <h2>Registro de Usuario</h2>
+
+        {{ form.as_p }}
+
+        <button type="submit">Registrar</button>
+        <button type="button" class="volver" onclick="window.history.back()">Volver</button>
+
+        {% if mensaje %}
+            <p style="color:red;">{{ mensaje }}</p>
+        {% endif %}
+    </form>
+
+    <script>
+        
+        const form = document.querySelector("form");
+        form.addEventListener("submit", (e) => {
+            const correo = document.querySelector("#id_correo").value;
+            const contrasena = document.querySelector("#id_contrasena").value;
+
+            if (!correo.includes("@")) {
+                alert("Por favor ingresa un correo válido.");
+                e.preventDefault();
+            }
+            if (contrasena.length < 8) {
+                alert("La contraseña debe tener al menos 8 caracteres.");
+                e.preventDefault();
+            }
+        });
+    </script>
+</body>
+</html>
