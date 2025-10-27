@@ -21,5 +21,6 @@ from .views import test_connection
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/test/', test_connection),
+    path('api/', include('users.urls')),
 ]
 
