@@ -46,14 +46,11 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-
-
      # Apps del proyecto
     'users',
     'courses',
     'lessons',
     'games',
-
     # librería CORS
     'corsheaders',
 ]
