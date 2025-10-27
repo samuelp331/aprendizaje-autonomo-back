@@ -18,9 +18,16 @@ from django.contrib import admin
 from django.urls import path, include
 from .views import test_connection
 
+def health(request):
+    return JsonResponse({"status": "ok", "service": "django", "db": "connected"}, status=200)
+
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/test/', test_connection),
     path('api/', include('users.urls')),
+    path('api/users/', include('users.urls')),
+    path('api/users/register/', include('users.urls')),
+
 ]
 
