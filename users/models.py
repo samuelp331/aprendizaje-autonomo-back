@@ -13,12 +13,3 @@ class User(AbstractUser):
     read_only_fields = ('id', 'estado_suscripcion', 'fecha_inicio_suscripcion', 'fecha_fin_suscripcion')
     def __str__(self):
         return f"{self.username} - {self.get_rol_display()}"
-
-def create(self, validated_data):
-        password = validated_data.pop('password', None)
-        user = User.objects.create(**validated_data)
-        
-        if password is not None:
-            user.set_password(password)
-            user.save()
-        return user

@@ -17,6 +17,8 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from .views import test_connection
+from django.http import JsonResponse
+
 
 def health(request):
     return JsonResponse({"status": "ok", "service": "django", "db": "connected"}, status=200)
@@ -25,9 +27,10 @@ def health(request):
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/test/', test_connection),
-    path('api/', include('users.urls')),
+    # Base de usuarios: expone:
+    #   - /api/users/ (lista/crear)
+    #   - /api/users/<id>/ (detalle)
+    #   - /api/users/register/ (registro)
     path('api/users/', include('users.urls')),
-    path('api/users/register/', include('users.urls')),
-
 ]
 
