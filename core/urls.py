@@ -32,5 +32,7 @@ urlpatterns = [
     #   - /api/users/<id>/ (detalle)
     #   - /api/users/register/ (registro)
     path('api/users/', include('users.urls')),
+    # Cursos: lista y creación
+    path('api/courses/', include('courses.urls')),
 ]
 
