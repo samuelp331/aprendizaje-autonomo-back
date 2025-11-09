@@ -10,6 +10,8 @@ class User(AbstractUser):
     estado_suscripcion = models.BooleanField(default=False)
     fecha_inicio_suscripcion = models.DateField(null=True, blank=True)
     fecha_fin_suscripcion = models.DateField(null=True, blank=True)
+    intentos_fallidos = models.PositiveIntegerField(default=0)
+    cuenta_bloqueada = models.BooleanField(default=False)
     read_only_fields = ('id', 'estado_suscripcion', 'fecha_inicio_suscripcion', 'fecha_fin_suscripcion')
     def __str__(self):
         return f"{self.username} - {self.get_rol_display()}"

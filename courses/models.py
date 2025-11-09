@@ -26,6 +26,14 @@ class Course(models.Model):
     duracion = models.PositiveIntegerField(blank=True, null=True)
     imagen_portada = models.URLField(blank=True, null=True)
 
+    # Publicación y trazabilidad
+    ESTADO_CHOICES = [
+        ("borrador", "Borrador"),
+        ("publicado", "Publicado"),
+    ]
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default="publicado")
+    created_at = models.DateTimeField(auto_now_add=True)
+
     # Gamificación
     gamificacion = models.BooleanField(default=False)
     tipo_gamificacion = models.CharField(

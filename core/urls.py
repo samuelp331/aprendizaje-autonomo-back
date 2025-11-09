@@ -18,6 +18,7 @@ from django.contrib import admin
 from django.urls import path, include
 from .views import test_connection
 from django.http import JsonResponse
+from rest_framework.authtoken.views import obtain_auth_token
 
 
 def health(request):
@@ -27,6 +28,8 @@ def health(request):
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/test/', test_connection),
+    # Auth
+    path('api/auth/token/', obtain_auth_token, name='api-token'),
     # Base de usuarios: expone:
     #   - /api/users/ (lista/crear)
     #   - /api/users/<id>/ (detalle)
