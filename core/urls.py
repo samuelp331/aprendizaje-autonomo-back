@@ -16,7 +16,11 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.http import JsonResponse  
 from .views import test_connection
+from django.conf import settings
+from django.conf.urls.static import static
+
 
 def health(request):
     return JsonResponse({"status": "ok", "service": "django", "db": "connected"}, status=200)
@@ -25,8 +29,12 @@ def health(request):
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/test/', test_connection),
+    path('api/health/', health),  # opcional: para verificar estado del backend
     path('api/users/', include('users.urls')),
     path('api/users/register/', include('users.urls')),
-
+    path('api/', include('lessons.urls')),
 ]
 
+# 👇 Esta parte debe ir DESPUÉS de definir urlpatterns
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
