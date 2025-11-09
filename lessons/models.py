@@ -42,4 +42,6 @@ class Lesson(models.Model):
                 raise ValidationError("Solo puede haber una lección con juego por curso.")
 
     def __str__(self):
-        return f"{self.title} ({self.course.name})"
+        # Course mantiene campo Python 'titulo' (db_column 'title')
+        course_title = getattr(self.course, 'titulo', None) or ''
+        return f"{self.title} ({course_title})"
