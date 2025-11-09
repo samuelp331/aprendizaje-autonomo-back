@@ -171,3 +171,6 @@ CSRF_TRUSTED_ORIGINS = [
 
 # Permitir credenciales (cookies) con CORS para sesiones
 CORS_ALLOW_CREDENTIALS = True
+# Archivos multimedia (subidas de usuarios, PDFs, imágenes, etc.)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'

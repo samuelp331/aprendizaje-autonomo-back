@@ -16,9 +16,10 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.http import JsonResponse  
 from .views import test_connection
-from django.http import JsonResponse
-from rest_framework.authtoken.views import obtain_auth_token
+from django.conf import settings
+from django.conf.urls.static import static
 
 
 def health(request):
@@ -28,14 +29,12 @@ def health(request):
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/test/', test_connection),
-    # Auth
-    path('api/auth/token/', obtain_auth_token, name='api-token'),
-    # Base de usuarios: expone:
-    #   - /api/users/ (lista/crear)
-    #   - /api/users/<id>/ (detalle)
-    #   - /api/users/register/ (registro)
+    path('api/health/', health),  # opcional: para verificar estado del backend
     path('api/users/', include('users.urls')),
-    # Cursos: lista y creación
-    path('api/courses/', include('courses.urls')),
+    path('api/users/register/', include('users.urls')),
+    path('api/', include('lessons.urls')),
 ]
 
+# 👇 Esta parte debe ir DESPUÉS de definir urlpatterns
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

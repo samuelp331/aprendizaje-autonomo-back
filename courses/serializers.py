@@ -76,14 +76,11 @@ class CourseListSerializer(serializers.ModelSerializer):
         url = obj.imagen_portada
         if not url:
             return ""
-        # Si ya viene en data URI base64, devolver solo el payload base64
         if isinstance(url, str) and url.startswith('data:image'):
             try:
-                # data:image/png;base64,XXXX
                 return url.split(',')[1]
             except Exception:
                 return ""
-        # Si es una URL http(s), intentar descargar y codificar
         try:
             parsed = urlparse(url)
             if parsed.scheme in ("http", "https"):
