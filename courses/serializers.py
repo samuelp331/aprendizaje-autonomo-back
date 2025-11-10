@@ -102,3 +102,59 @@ class CourseListSerializer(serializers.ModelSerializer):
         except Exception:
             return ""
         return ""
+
+
+class LessonBriefSerializer(serializers.Serializer):
+    title = serializers.CharField()
+    duration = serializers.CharField(allow_blank=True, required=False)
+    order = serializers.IntegerField()
+    is_game_linked = serializers.BooleanField()
+    locked = serializers.BooleanField()
+
+
+class CourseDetailSerializer(serializers.ModelSerializer):
+    title = serializers.CharField(source='titulo')
+    short_description = serializers.CharField(source='descripcion_corta')
+    long_description = serializers.CharField(source='descripcion_detallada', allow_blank=True, allow_null=True)
+    category = serializers.CharField(source='categoria')
+    nivel = serializers.SerializerMethodField()
+    duration = serializers.SerializerMethodField()
+    cover_image = serializers.CharField(source='imagen_portada', allow_blank=True, allow_null=True)
+    lessons = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Course
+        fields = (
+            'title',
+            'short_description',
+            'long_description',
+            'category',
+            'nivel',
+            'duration',
+            'cover_image',
+            'lessons',
+        )
+
+    def get_nivel(self, obj: Course) -> str:
+        try:
+            return obj.get_nivel_display()
+        except Exception:
+            return obj.nivel
+
+    def get_duration(self, obj: Course) -> str:
+        if obj.duracion is None:
+            return ""
+        return f"{obj.duracion} horas"
+
+    def get_lessons(self, obj: Course):
+        # Lista de lecciones con candado (locked=true) porque requieren suscripción
+        items = []
+        for lesson in getattr(obj, 'lessons', []).all().order_by('order'):
+            items.append({
+                'title': getattr(lesson, 'title', ''),
+                'duration': '',
+                'order': getattr(lesson, 'order', 0),
+                'is_game_linked': bool(getattr(lesson, 'is_game_linked', False)),
+                'locked': True,
+            })
+        return items

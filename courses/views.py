@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 
 from .models import Course
-from .serializers import CourseSerializer, CourseListSerializer
+from .serializers import CourseSerializer, CourseListSerializer, CourseDetailSerializer
 from .permissions import IsProfessor
 
 
@@ -78,6 +78,16 @@ class CourseListCreateView(generics.ListCreateAPIView):
 
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
+
+
+class CourseDetailView(generics.RetrieveAPIView):
+    serializer_class = CourseDetailSerializer
+    permission_classes = [AllowAny]
+
+    def get_object(self):
+        from django.shortcuts import get_object_or_404
+        public_code = self.kwargs.get('public_code')
+        return get_object_or_404(Course, codigo=public_code, estado='publicado')
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
