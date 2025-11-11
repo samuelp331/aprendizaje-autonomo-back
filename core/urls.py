@@ -33,6 +33,7 @@ urlpatterns = [
     path('api/users/', include('users.urls')),
     path('api/users/register/', include('users.urls')),
     path('api/', include('lessons.urls')),
+    path('api/courses/', include('courses.urls')),
 ]
 
 # 👇 Esta parte debe ir DESPUÉS de definir urlpatterns

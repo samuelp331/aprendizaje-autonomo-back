@@ -4,6 +4,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.authentication import BasicAuthentication
 from django.contrib.auth import authenticate, login
 from .models import User
+from rest_framework.authtoken.models import Token
 from .serializers import UserSerializer, RegisterSerializer, LoginSerializer
 
 class UserListCreate(generics.ListCreateAPIView):
@@ -75,9 +76,13 @@ class LoginView(generics.GenericAPIView):
         except Exception:
             pass
 
+        # emitir/obtener token de autenticación para DRF TokenAuthentication
+        token, _ = Token.objects.get_or_create(user=user_auth)
+
         data = {
             "status": "ok",
             "message": "Login exitoso",
+            "token": token.key,
             "user": {
                 "id": user_auth.id,
                 "email": user_auth.username,
