@@ -29,13 +29,11 @@ def health(request):
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/test/', test_connection),
-    path('api/health/', health),  # opcional: para verificar estado del backend
     path('api/users/', include('users.urls')),
     path('api/users/register/', include('users.urls')),
-    path('api/', include('lessons.urls')),
+    path('api/lessons/', include('lessons.urls')),
     path('api/courses/', include('courses.urls')),
 ]
 
-# 👇 Esta parte debe ir DESPUÉS de definir urlpatterns
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
