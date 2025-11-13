@@ -39,6 +39,7 @@ class CourseSerializer(serializers.ModelSerializer):
 
 
 class CourseListSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(source='pk')
     image = serializers.SerializerMethodField()
     title = serializers.CharField(source='titulo')
     category = serializers.CharField(source='categoria')
@@ -49,6 +50,7 @@ class CourseListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Course
         fields = (
+            'id',
             'image',
             'title',
             'category',
