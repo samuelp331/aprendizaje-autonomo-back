@@ -40,6 +40,7 @@ class CourseSerializer(serializers.ModelSerializer):
 
 class CourseListSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(source='pk')
+    public_code = serializers.CharField(source='codigo')
     image = serializers.SerializerMethodField()
     title = serializers.CharField(source='titulo')
     category = serializers.CharField(source='categoria')
@@ -51,6 +52,7 @@ class CourseListSerializer(serializers.ModelSerializer):
         model = Course
         fields = (
             'id',
+            'public_code',
             'image',
             'title',
             'category',
