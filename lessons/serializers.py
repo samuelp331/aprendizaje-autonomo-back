@@ -2,41 +2,57 @@ from rest_framework import serializers
 from .models import Lesson
 import os
 
+
 class LessonSerializer(serializers.ModelSerializer):
+    resource_url = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = Lesson
         fields = '__all__'
-        read_only_fields = ['id', 'created_at']
+        read_only_fields = ['id', 'created_at', 'resource_url']
+
+    def get_resource_url(self, obj):
+        if obj.file:
+            url = obj.file.url
+            request = self.context.get('request')
+            if request is not None:
+                return request.build_absolute_uri(url)
+            return url
+        return ""
 
     def validate_file(self, value):
         if value:
             ext = os.path.splitext(value.name)[1].lower()
-            if ext not in ['.pdf', '.docx']:
-                raise serializers.ValidationError("Solo se permiten archivos .pdf o .docx.")
+            if ext != '.pdf':
+                raise serializers.ValidationError("Solo se permiten archivos .pdf.")
             if value.size > 5 * 1024 * 1024:
                 raise serializers.ValidationError("El archivo no debe superar los 5 MB.")
         return value
 
-    def validate(self, data):
-        course = data.get('course') or getattr(self.instance, 'course', None)
-        order = data.get('order', getattr(self.instance, 'order', None))
-        is_game_linked = data.get('is_game_linked', getattr(self.instance, 'is_game_linked', False))
-
+    def validate(self, attrs):
+        course = attrs.get('course') or getattr(self.instance, 'course', None)
         if course is None:
             raise serializers.ValidationError({"course": "El curso es requerido."})
 
-        # Orden: si no se envía, asignar siguiente disponible; si se envía, debe ser >=1
-        if order is None:
-            existing_orders = list(course.lessons.values_list('order', flat=True))
-            data['order'] = (max(existing_orders) + 1) #if existing_orders else 1
-        elif int(order) < 1:
-            raise serializers.ValidationError({"order": "El orden debe ser un entero positivo."})
+        # Determinar si el cliente envió 'order' o no
+        sent_order = 'order' in getattr(self, 'initial_data', {})
+        order = attrs.get('order', getattr(self.instance, 'order', None))
+
+        # Si no lo envió, asignar el siguiente consecutivo
+        if not sent_order:
+            existing = list(course.lessons.values_list('order', flat=True))
+            attrs['order'] = (max(existing) + 1) if existing else 1
+        else:
+            # Validar que sea entero positivo
+            if order is None or int(order) < 1:
+                raise serializers.ValidationError({"order": "El orden debe ser un entero positivo."})
 
         # Solo una lección con is_game_linked=True por curso
+        is_game_linked = attrs.get('is_game_linked', getattr(self.instance, 'is_game_linked', False))
         if is_game_linked:
             qs = course.lessons.filter(is_game_linked=True)
             if self.instance:
                 qs = qs.exclude(id=self.instance.id)
             if qs.exists():
                 raise serializers.ValidationError({"is_game_linked": "Solo puede haber una lección vinculada a un juego por curso."})
-        return data
+        return attrs

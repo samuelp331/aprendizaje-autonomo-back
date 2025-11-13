@@ -7,9 +7,8 @@ import os
 
 def validate_file_extension(value):
     ext = os.path.splitext(value.name)[1].lower()
-    valid_extensions = ['.pdf', '.docx']
-    if ext not in valid_extensions:
-        raise ValidationError("Solo se permiten archivos PDF o Word (.pdf, .docx).")
+    if ext != '.pdf':
+        raise ValidationError("Solo se permiten archivos PDF (.pdf).")
     if value.size > 5 * 1024 * 1024:  # 5 MB
         raise ValidationError("El archivo no debe superar los 5 MB.")
 

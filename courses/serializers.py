@@ -125,6 +125,7 @@ class CourseDetailSerializer(serializers.ModelSerializer):
     duration = serializers.SerializerMethodField()
     cover_image = serializers.CharField(source='imagen_portada', allow_blank=True, allow_null=True)
     lessons = serializers.SerializerMethodField()
+    is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
         model = Course
@@ -137,6 +138,7 @@ class CourseDetailSerializer(serializers.ModelSerializer):
             'duration',
             'cover_image',
             'lessons',
+            'is_subscribed',
         )
 
     def get_nivel(self, obj: Course) -> str:
@@ -150,15 +152,37 @@ class CourseDetailSerializer(serializers.ModelSerializer):
             return ""
         return f"{obj.duracion} horas"
 
+    def _user_is_subscribed(self):
+        request = self.context.get('request')
+        user = getattr(request, 'user', None)
+        if not user or not user.is_authenticated:
+            return False
+        # Profesores siempre pueden ver su propio contenido
+        if getattr(user, 'rol', None) == '1':
+            return True
+        # Estudiante suscrito al plan
+        return bool(getattr(user, 'estado_suscripcion', False))
+
+    def get_is_subscribed(self, obj: Course):
+        return self._user_is_subscribed()
+
     def get_lessons(self, obj: Course):
-        # Lista de lecciones con candado (locked=true) porque requieren suscripción
+        request = self.context.get('request')
+        is_subscribed = self._user_is_subscribed()
         items = []
         for lesson in getattr(obj, 'lessons', []).all().order_by('order'):
+            resource_url = ''
+            if getattr(lesson, 'file', None) and is_subscribed:
+                resource_url = lesson.file.url
+                if request is not None:
+                    resource_url = request.build_absolute_uri(resource_url)
             items.append({
                 'title': getattr(lesson, 'title', ''),
+                'content': (getattr(lesson, 'content', '') or '') if is_subscribed else '',
                 'duration': '',
                 'order': getattr(lesson, 'order', 0),
                 'is_game_linked': bool(getattr(lesson, 'is_game_linked', False)),
-                'locked': True,
+                'resource_url': resource_url,
+                'locked': not is_subscribed,
             })
         return items
