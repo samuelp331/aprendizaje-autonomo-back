@@ -36,6 +36,8 @@ class CourseSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         user = getattr(request, 'user', None)
         return Course.objects.create(profesor=user, **validated_data)
+    
+
 
 
 class CourseListSerializer(serializers.ModelSerializer):
@@ -47,6 +49,7 @@ class CourseListSerializer(serializers.ModelSerializer):
     nivel = serializers.SerializerMethodField()
     duration = serializers.SerializerMethodField()
     description = serializers.SerializerMethodField()
+    is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
         model = Course
@@ -59,7 +62,17 @@ class CourseListSerializer(serializers.ModelSerializer):
             'nivel',
             'duration',
             'description',
+            'is_subscribed',
         )
+
+    def get_is_subscribed(self, obj):
+        request = self.context.get('request')
+        user = getattr(request, 'user', None)
+        if not user or not user.is_authenticated:
+            return False
+        if getattr(user, 'rol', None) == '1':
+            return True
+        return bool(getattr(user, 'estado_suscripcion', False))    
 
     def get_nivel(self, obj: Course) -> str:
         try:
@@ -124,8 +137,8 @@ class CourseDetailSerializer(serializers.ModelSerializer):
     nivel = serializers.SerializerMethodField()
     duration = serializers.SerializerMethodField()
     cover_image = serializers.CharField(source='imagen_portada', allow_blank=True, allow_null=True)
-    lessons = serializers.SerializerMethodField()
     is_subscribed = serializers.SerializerMethodField()
+    lessons = serializers.SerializerMethodField()
 
     class Meta:
         model = Course
