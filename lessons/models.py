@@ -1,6 +1,9 @@
 from django.db import models
+from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.utils import timezone
 from courses.models import Course
+from courses.utils import update_course_progress
 import os
 
 
@@ -44,3 +47,28 @@ class Lesson(models.Model):
         # Course mantiene campo Python 'titulo' (db_column 'title')
         course_title = getattr(self.course, 'titulo', None) or ''
         return f"{self.title} ({course_title})"
+
+
+class LessonProgress(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='lesson_progress')
+    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name='progress')
+    completed = models.BooleanField(default=False)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        unique_together = ('user', 'lesson')
+
+    def save(self, *args, **kwargs):
+        if self.completed:
+            if not self.completed_at:
+                self.completed_at = timezone.now()
+        else:
+            self.completed_at = None
+        super().save(*args, **kwargs)
+        update_course_progress(self.user, self.lesson.course)
+
+    def delete(self, *args, **kwargs):
+        user = self.user
+        course = self.lesson.course
+        super().delete(*args, **kwargs)
+        update_course_progress(user, course)

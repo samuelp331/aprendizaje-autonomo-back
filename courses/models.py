@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from users.models import User
 
@@ -59,6 +60,7 @@ class Course(models.Model):
     def __str__(self):
         return self.titulo
 
+    
     class Meta:
         constraints = [
             # Si gamificación está activa, tipo_gamificacion no puede ser NULL
@@ -70,3 +72,14 @@ class Course(models.Model):
                 name="chk_tipo_gamificacion_requerido_si_activo",
             )
         ]
+
+class CourseProgress(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='course_progress')
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='progress')
+    completed_lessons = models.PositiveIntegerField(default=0)
+    total_lessons = models.PositiveIntegerField(default=0)
+    status = models.CharField(max_length=20, choices=[('in_progress','En progreso'),('completed','Completado')], default='in_progress')
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        unique_together = ('user', 'course')

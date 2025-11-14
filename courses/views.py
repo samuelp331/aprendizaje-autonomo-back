@@ -2,10 +2,19 @@ from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.views import APIView
+from django.shortcuts import get_object_or_404
 
 from .models import Course
-from .serializers import CourseSerializer, CourseListSerializer, CourseDetailSerializer
+from lessons.models import Lesson, LessonProgress
+from .serializers import (
+    CourseSerializer,
+    CourseListSerializer,
+    CourseDetailSerializer,
+    CourseProgressSerializer,
+)
 from .permissions import IsProfessor
+from .utils import update_course_progress
 
 
 class CoursesPagination(PageNumberPagination):
@@ -96,7 +105,6 @@ class CourseDetailView(generics.RetrieveAPIView):
     permission_classes = [AllowAny]
 
     def get_object(self):
-        from django.shortcuts import get_object_or_404
         public_code = self.kwargs.get('public_code')
         return get_object_or_404(Course, codigo=public_code, estado='publicado')
 
@@ -113,3 +121,58 @@ class CourseDetailView(generics.RetrieveAPIView):
             status=status.HTTP_201_CREATED,
             headers=headers,
         )
+
+
+class LessonProgressUpdateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, lesson_id):
+        user = request.user
+        if getattr(user, 'rol', None) != '2':
+            return Response(
+                {'detail': 'Solo los estudiantes pueden actualizar su progreso.'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        lesson = get_object_or_404(Lesson, pk=lesson_id)
+        completed = request.data.get('completed', True)
+        if isinstance(completed, str):
+            completed = completed.lower() in ['1', 'true', 'yes']
+        completed = bool(completed)
+
+        progress, _ = LessonProgress.objects.get_or_create(user=user, lesson=lesson)
+        progress.completed = completed
+        progress.save()
+
+        course_progress = update_course_progress(user, lesson.course)
+        serializer = CourseProgressSerializer(course_progress, context={'request': request})
+
+        return Response(
+            {
+                'message': 'Progreso actualizado',
+                'lesson': {
+                    'lesson_id': lesson.id,
+                    'completed': progress.completed,
+                    'completed_at': progress.completed_at,
+                },
+                'course_progress': serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class CourseProgressDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, public_code):
+        user = request.user
+        if getattr(user, 'rol', None) != '2':
+            return Response(
+                {'detail': 'Solo los estudiantes pueden consultar su progreso.'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        course = get_object_or_404(Course, codigo=public_code, estado='publicado')
+        course_progress = update_course_progress(user, course)
+        serializer = CourseProgressSerializer(course_progress, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)

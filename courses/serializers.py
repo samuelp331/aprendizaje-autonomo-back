@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import Course
+from .models import Course, CourseProgress
+from lessons.models import LessonProgress, Lesson
 import base64
 from urllib.parse import urlparse
 from urllib.request import urlopen
@@ -199,3 +200,38 @@ class CourseDetailSerializer(serializers.ModelSerializer):
                 'locked': not is_subscribed,
             })
         return items
+
+
+class CourseProgressSerializer(serializers.ModelSerializer):
+    course = serializers.CharField(source='course.codigo')
+    lessons = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CourseProgress
+        fields = (
+            'course',
+            'completed_lessons',
+            'total_lessons',
+            'status',
+            'completed_at',
+            'lessons',
+        )
+
+    def get_lessons(self, obj: CourseProgress):
+        user = obj.user
+        lessons = obj.course.lessons.all().order_by('order')
+        progress_map = {
+            lp.lesson_id: lp
+            for lp in LessonProgress.objects.filter(user=user, lesson__course=obj.course)
+        }
+        data = []
+        for lesson in lessons:
+            lp = progress_map.get(lesson.id)
+            data.append({
+                'lesson_id': lesson.id,
+                'title': lesson.title,
+                'order': lesson.order,
+                'completed': lp.completed if lp else False,
+                'completed_at': lp.completed_at if lp else None,
+            })
+        return data
