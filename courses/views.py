@@ -5,13 +5,14 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.views import APIView
 from django.shortcuts import get_object_or_404
 
-from .models import Course
+from .models import Course, CourseSubscription
 from lessons.models import Lesson, LessonProgress
 from .serializers import (
     CourseSerializer,
     CourseListSerializer,
     CourseDetailSerializer,
     CourseProgressSerializer,
+    CourseSubscriptionSerializer,
 )
 from .permissions import IsProfessor
 from .utils import update_course_progress
@@ -176,3 +177,41 @@ class CourseProgressDetailView(APIView):
         course_progress = update_course_progress(user, course)
         serializer = CourseProgressSerializer(course_progress, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class CourseSubscriptionView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, public_code):
+        user = request.user
+        if getattr(user, 'rol', None) != '2':
+            return Response(
+                {'detail': 'Solo los estudiantes pueden suscribirse a un curso.'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        course = get_object_or_404(Course, codigo=public_code, estado='publicado')
+        subscription, created = CourseSubscription.objects.get_or_create(user=user, course=course)
+        if not created and not subscription.is_active:
+            subscription.is_active = True
+            subscription.save()
+        serializer = CourseSubscriptionSerializer(subscription, context={'request': request})
+        return Response(
+            {'message': 'Suscripción activada', 'subscription': serializer.data},
+            status=status.HTTP_200_OK,
+        )
+
+    def delete(self, request, public_code):
+        user = request.user
+        if getattr(user, 'rol', None) != '2':
+            return Response(
+                {'detail': 'Solo los estudiantes pueden cancelar una suscripción.'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        course = get_object_or_404(Course, codigo=public_code, estado='publicado')
+        try:
+            subscription = CourseSubscription.objects.get(user=user, course=course)
+            subscription.is_active = False
+            subscription.save()
+            return Response({'message': 'Suscripción cancelada'}, status=status.HTTP_200_OK)
+        except CourseSubscription.DoesNotExist:
+            return Response({'detail': 'No existe una suscripción activa.'}, status=status.HTTP_404_NOT_FOUND)
