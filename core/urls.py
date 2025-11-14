@@ -33,6 +33,7 @@ urlpatterns = [
     path('api/users/register/', include('users.urls')),
     path('api/lessons/', include('lessons.urls')),
     path('api/courses/', include('courses.urls')),
+    path('api/games/', include('games.urls')),
 ]
 
 if settings.DEBUG:

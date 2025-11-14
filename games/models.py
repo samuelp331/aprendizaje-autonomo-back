@@ -12,10 +12,9 @@ class MemoryGame(models.Model):
         return self.nombre
 
 class MemoryGamePair(models.Model):
-    juego = models.ForeignKey(MemoryGame, on_delete=models.CASCADE)
-    image_url = models.ImageField(upload_to='juegos/')
+    juego = models.ForeignKey( MemoryGame,on_delete=models.CASCADE, related_name="pairs")
+    question_text = models.CharField(max_length=255, null=True, blank=True)
     answer_text = models.CharField(max_length=255)
-    pair_id = models.IntegerField()
 
     def __str__(self):
         return f"Pair {self.id} - {self.juego.nombre}"
