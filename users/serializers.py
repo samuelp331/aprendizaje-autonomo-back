@@ -43,3 +43,25 @@ class RegisterSerializer(serializers.ModelSerializer):
         user.set_password(password)
         user.save()
         return user
+
+
+class LoginSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True)
+
+    def validate(self, attrs):
+        email = attrs.get('email', '').strip().lower()
+        password = attrs.get('password')
+        if not email or not password:
+            raise serializers.ValidationError({"detail": "Correo y contraseña son requeridos."})
+
+        try:
+            user = User.objects.get(username=email)
+        except User.DoesNotExist:
+            raise serializers.ValidationError({"detail": "Correo o contraseña incorrectos."})
+
+        if user.cuenta_bloqueada:
+            raise serializers.ValidationError({"detail": "Cuenta bloqueada por intentos fallidos."})
+
+        attrs['user_instance'] = user
+        return attrs
