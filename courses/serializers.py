@@ -1,9 +1,6 @@
 from rest_framework import serializers
 from .models import Course, CourseProgress, CourseSubscription
 from lessons.models import LessonProgress, Lesson
-import base64
-from urllib.parse import urlparse
-from urllib.request import urlopen
 
 
 class CourseSerializer(serializers.ModelSerializer):
@@ -93,35 +90,7 @@ class CourseListSerializer(serializers.ModelSerializer):
         return f"{obj.duracion} horas"
 
     def get_image(self, obj: Course) -> str:
-        url = obj.imagen_portada
-        if not url:
-            return ""
-        if isinstance(url, str) and url.startswith('data:image'):
-            try:
-                return url.split(',')[1]
-            except Exception:
-                return ""
-        try:
-            parsed = urlparse(url)
-            if parsed.scheme in ("http", "https"):
-                with urlopen(url) as resp:
-                    ctype = resp.headers.get('Content-Type', '')
-                    if not any(t in ctype for t in ("image/jpeg", "image/jpg", "image/png")):
-                        return ""
-                    clen = resp.headers.get('Content-Length')
-                    if clen is not None:
-                        try:
-                            if int(clen) > 2 * 1024 * 1024:
-                                return ""
-                        except Exception:
-                            pass
-                    data = resp.read(2 * 1024 * 1024 + 1)
-                    if len(data) > 2 * 1024 * 1024:
-                        return ""
-                    return base64.b64encode(data).decode('ascii')
-        except Exception:
-            return ""
-        return ""
+        return obj.imagen_portada or ""
 
     def get_professor(self, obj: Course):
         if obj.profesor:
@@ -185,28 +154,7 @@ class CourseDetailSerializer(serializers.ModelSerializer):
         return f"{obj.duracion} horas"
 
     def get_cover_image(self, obj: Course):
-        url = obj.imagen_portada
-        if not url:
-            return ""
-        if isinstance(url, str) and url.startswith('data:image'):
-            try:
-                return url.split(',')[1]
-            except Exception:
-                return ""
-        try:
-            parsed = urlparse(url)
-            if parsed.scheme in ("http", "https"):
-                with urlopen(url) as resp:
-                    ctype = resp.headers.get('Content-Type', '')
-                    if not any(t in ctype for t in ("image/jpeg", "image/jpg", "image/png")):
-                        return ""
-                    data = resp.read(2 * 1024 * 1024 + 1)
-                    if len(data) > 2 * 1024 * 1024:
-                        return ""
-                    return base64.b64encode(data).decode('ascii')
-        except Exception:
-            return ""
-        return ""
+        return obj.imagen_portada or ""
 
     def get_lessons(self, obj: Course):
         return list(obj.lessons.all().order_by('order').values_list('id', flat=True))
