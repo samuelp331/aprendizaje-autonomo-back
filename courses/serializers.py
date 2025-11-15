@@ -50,6 +50,7 @@ class CourseListSerializer(serializers.ModelSerializer):
     nivel = serializers.SerializerMethodField()
     duration = serializers.SerializerMethodField()
     description = serializers.SerializerMethodField()
+    professor = serializers.SerializerMethodField()
     is_subscribed = serializers.SerializerMethodField()
     lessons = serializers.SerializerMethodField()
 
@@ -64,6 +65,7 @@ class CourseListSerializer(serializers.ModelSerializer):
             'nivel',
             'duration',
             'description',
+            'professor',
             'is_subscribed',
             'lessons',
         )
@@ -123,6 +125,20 @@ class CourseListSerializer(serializers.ModelSerializer):
             return ""
         return ""
 
+    def get_professor(self, obj: Course):
+        if obj.profesor:
+            return {
+                'id': obj.profesor.id,
+                'name': f"{obj.profesor.first_name} {obj.profesor.last_name}".strip() or obj.profesor.username,
+                'email': obj.profesor.email,
+            }
+        return None
+
+    def get_lessons(self, obj: Course):
+        return list(
+            obj.lessons.all().order_by('order').values_list('id', flat=True)
+        )
+
 
 class LessonBriefSerializer(serializers.Serializer):
     title = serializers.CharField()
@@ -140,6 +156,7 @@ class CourseDetailSerializer(serializers.ModelSerializer):
     nivel = serializers.SerializerMethodField()
     duration = serializers.SerializerMethodField()
     cover_image = serializers.SerializerMethodField()
+    professor = serializers.SerializerMethodField()
     is_subscribed = serializers.SerializerMethodField()
     lessons = serializers.SerializerMethodField()
 
@@ -153,6 +170,7 @@ class CourseDetailSerializer(serializers.ModelSerializer):
             'nivel',
             'duration',
             'cover_image',
+            'professor',
             'lessons',
             'is_subscribed',
         )
@@ -232,6 +250,15 @@ class CourseDetailSerializer(serializers.ModelSerializer):
                 'locked': not is_subscribed,
             })
         return items
+
+    def get_professor(self, obj: Course):
+        if obj.profesor:
+            return {
+                'id': obj.profesor.id,
+                'name': f"{obj.profesor.first_name} {obj.profesor.last_name}".strip() or obj.profesor.username,
+                'email': obj.profesor.email,
+            }
+        return None
 
 
 class CourseProgressSerializer(serializers.ModelSerializer):
