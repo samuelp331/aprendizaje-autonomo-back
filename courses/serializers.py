@@ -1,9 +1,6 @@
 from rest_framework import serializers
-from .models import Course, CourseProgress
+from .models import Course, CourseProgress, CourseSubscription
 from lessons.models import LessonProgress, Lesson
-import base64
-from urllib.parse import urlparse
-from urllib.request import urlopen
 
 
 class CourseSerializer(serializers.ModelSerializer):
@@ -46,11 +43,14 @@ class CourseListSerializer(serializers.ModelSerializer):
     public_code = serializers.CharField(source='codigo')
     image = serializers.SerializerMethodField()
     title = serializers.CharField(source='titulo')
+    short_description = serializers.CharField(source='descripcion_corta')
+    long_description = serializers.CharField(source='descripcion_detallada')
     category = serializers.CharField(source='categoria')
     nivel = serializers.SerializerMethodField()
     duration = serializers.SerializerMethodField()
-    description = serializers.SerializerMethodField()
+    professor = serializers.SerializerMethodField()
     is_subscribed = serializers.SerializerMethodField()
+    lessons = serializers.SerializerMethodField()
 
     class Meta:
         model = Course
@@ -59,11 +59,14 @@ class CourseListSerializer(serializers.ModelSerializer):
             'public_code',
             'image',
             'title',
+            'short_description',
+            'long_description',
             'category',
             'nivel',
             'duration',
-            'description',
+            'professor',
             'is_subscribed',
+            'lessons',
         )
 
     def get_is_subscribed(self, obj):
@@ -73,7 +76,7 @@ class CourseListSerializer(serializers.ModelSerializer):
             return False
         if getattr(user, 'rol', None) == '1':
             return True
-        return bool(getattr(user, 'estado_suscripcion', False))    
+        return CourseSubscription.objects.filter(user=user, course=obj, is_active=True).exists()
 
     def get_nivel(self, obj: Course) -> str:
         try:
@@ -86,40 +89,22 @@ class CourseListSerializer(serializers.ModelSerializer):
             return ""
         return f"{obj.duracion} horas"
 
-    def get_description(self, obj: Course) -> str:
-        text = obj.descripcion_corta or ""
-        return text[:150]
-
     def get_image(self, obj: Course) -> str:
-        url = obj.imagen_portada
-        if not url:
-            return ""
-        if isinstance(url, str) and url.startswith('data:image'):
-            try:
-                return url.split(',')[1]
-            except Exception:
-                return ""
-        try:
-            parsed = urlparse(url)
-            if parsed.scheme in ("http", "https"):
-                with urlopen(url) as resp:
-                    ctype = resp.headers.get('Content-Type', '')
-                    if not any(t in ctype for t in ("image/jpeg", "image/jpg", "image/png")):
-                        return ""
-                    clen = resp.headers.get('Content-Length')
-                    if clen is not None:
-                        try:
-                            if int(clen) > 2 * 1024 * 1024:
-                                return ""
-                        except Exception:
-                            pass
-                    data = resp.read(2 * 1024 * 1024 + 1)
-                    if len(data) > 2 * 1024 * 1024:
-                        return ""
-                    return base64.b64encode(data).decode('ascii')
-        except Exception:
-            return ""
-        return ""
+        return obj.imagen_portada or ""
+
+    def get_professor(self, obj: Course):
+        if obj.profesor:
+            return {
+                'id': obj.profesor.id,
+                'name': f"{obj.profesor.first_name} {obj.profesor.last_name}".strip() or obj.profesor.username,
+                'email': obj.profesor.email,
+            }
+        return None
+
+    def get_lessons(self, obj: Course):
+        return list(
+            obj.lessons.all().order_by('order').values_list('id', flat=True)
+        )
 
 
 class LessonBriefSerializer(serializers.Serializer):
@@ -137,7 +122,8 @@ class CourseDetailSerializer(serializers.ModelSerializer):
     category = serializers.CharField(source='categoria')
     nivel = serializers.SerializerMethodField()
     duration = serializers.SerializerMethodField()
-    cover_image = serializers.CharField(source='imagen_portada', allow_blank=True, allow_null=True)
+    cover_image = serializers.SerializerMethodField()
+    professor = serializers.SerializerMethodField()
     is_subscribed = serializers.SerializerMethodField()
     lessons = serializers.SerializerMethodField()
 
@@ -151,6 +137,7 @@ class CourseDetailSerializer(serializers.ModelSerializer):
             'nivel',
             'duration',
             'cover_image',
+            'professor',
             'lessons',
             'is_subscribed',
         )
@@ -166,6 +153,12 @@ class CourseDetailSerializer(serializers.ModelSerializer):
             return ""
         return f"{obj.duracion} horas"
 
+    def get_cover_image(self, obj: Course):
+        return obj.imagen_portada or ""
+
+    def get_lessons(self, obj: Course):
+        return list(obj.lessons.all().order_by('order').values_list('id', flat=True))
+
     def _user_is_subscribed(self):
         request = self.context.get('request')
         user = getattr(request, 'user', None)
@@ -174,8 +167,11 @@ class CourseDetailSerializer(serializers.ModelSerializer):
         # Profesores siempre pueden ver su propio contenido
         if getattr(user, 'rol', None) == '1':
             return True
-        # Estudiante suscrito al plan
-        return bool(getattr(user, 'estado_suscripcion', False))
+        # Verificar suscripción específica al curso
+        course = self.instance
+        if course is not None:
+            return CourseSubscription.objects.filter(user=user, course=course, is_active=True).exists()
+        return False
 
     def get_is_subscribed(self, obj: Course):
         return self._user_is_subscribed()
@@ -200,6 +196,15 @@ class CourseDetailSerializer(serializers.ModelSerializer):
                 'locked': not is_subscribed,
             })
         return items
+
+    def get_professor(self, obj: Course):
+        if obj.profesor:
+            return {
+                'id': obj.profesor.id,
+                'name': f"{obj.profesor.first_name} {obj.profesor.last_name}".strip() or obj.profesor.username,
+                'email': obj.profesor.email,
+            }
+        return None
 
 
 class CourseProgressSerializer(serializers.ModelSerializer):
@@ -235,3 +240,16 @@ class CourseProgressSerializer(serializers.ModelSerializer):
                 'completed_at': lp.completed_at if lp else None,
             })
         return data
+
+
+class CourseSubscriptionSerializer(serializers.ModelSerializer):
+    course = serializers.CharField(source='course.codigo', read_only=True)
+
+    class Meta:
+        model = CourseSubscription
+        fields = (
+            'course',
+            'is_active',
+            'created_at',
+            'updated_at',
+        )

@@ -1,8 +1,8 @@
 from django.db import models
-from lessons.models import Lesson
+from courses.models import Course
 
 class MemoryGame(models.Model):
-    leccion = models.ForeignKey(Lesson, on_delete=models.CASCADE)
+    curso = models.ForeignKey(Course,  on_delete=models.CASCADE,related_name='memory_games' )
     nombre = models.CharField(max_length=100)
     posicion = models.CharField(max_length=20, choices=[('inicio', 'Inicio'), ('mitad', 'Mitad'), ('final', 'Final')])
     grid_size = models.CharField(max_length=10)
@@ -12,10 +12,9 @@ class MemoryGame(models.Model):
         return self.nombre
 
 class MemoryGamePair(models.Model):
-    juego = models.ForeignKey(MemoryGame, on_delete=models.CASCADE)
-    image_url = models.ImageField(upload_to='juegos/')
+    juego = models.ForeignKey( MemoryGame,on_delete=models.CASCADE, related_name="pairs")
+    question_text = models.CharField(max_length=255, null=True, blank=True)
     answer_text = models.CharField(max_length=255)
-    pair_id = models.IntegerField()
 
     def __str__(self):
         return f"Pair {self.id} - {self.juego.nombre}"

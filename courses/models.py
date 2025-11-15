@@ -30,7 +30,7 @@ class Course(models.Model):
     categoria = models.CharField(max_length=100, db_column="category")
     nivel = models.CharField(max_length=20, choices=NIVEL_CHOICES, db_column="level")
     duracion = models.PositiveIntegerField(blank=True, null=True, db_column="duration_hours")
-    imagen_portada = models.URLField(blank=True, null=True, db_column="cover_image_url")
+    imagen_portada = models.TextField(blank=True, null=True, db_column="cover_image_url")
 
     # Publicación y trazabilidad
     ESTADO_CHOICES = [
@@ -83,3 +83,25 @@ class CourseProgress(models.Model):
 
     class Meta:
         unique_together = ('user', 'course')
+
+
+class CourseSubscription(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='course_subscriptions',
+    )
+    course = models.ForeignKey(
+        Course,
+        on_delete=models.CASCADE,
+        related_name='subscriptions',
+    )
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('user', 'course')
+
+    def __str__(self):
+        return f"{self.user} -> {self.course} ({'Activo' if self.is_active else 'Inactivo'})"
