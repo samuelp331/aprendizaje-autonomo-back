@@ -30,7 +30,7 @@ class Course(models.Model):
     categoria = models.CharField(max_length=100, db_column="category")
     nivel = models.CharField(max_length=20, choices=NIVEL_CHOICES, db_column="level")
     duracion = models.PositiveIntegerField(blank=True, null=True, db_column="duration_hours")
-    imagen_portada = models.URLField(blank=True, null=True, db_column="cover_image_url")
+    imagen_portada = models.TextField(blank=True, null=True, db_column="cover_image_url")
 
     # Publicación y trazabilidad
     ESTADO_CHOICES = [
