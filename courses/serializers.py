@@ -51,6 +51,7 @@ class CourseListSerializer(serializers.ModelSerializer):
     duration = serializers.SerializerMethodField()
     description = serializers.SerializerMethodField()
     is_subscribed = serializers.SerializerMethodField()
+    lessons = serializers.SerializerMethodField()
 
     class Meta:
         model = Course
@@ -64,6 +65,7 @@ class CourseListSerializer(serializers.ModelSerializer):
             'duration',
             'description',
             'is_subscribed',
+            'lessons',
         )
 
     def get_is_subscribed(self, obj):
@@ -189,6 +191,9 @@ class CourseDetailSerializer(serializers.ModelSerializer):
         except Exception:
             return ""
         return ""
+
+    def get_lessons(self, obj: Course):
+        return list(obj.lessons.all().order_by('order').values_list('id', flat=True))
 
     def _user_is_subscribed(self):
         request = self.context.get('request')
