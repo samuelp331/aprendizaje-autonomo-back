@@ -1,8 +1,8 @@
 from django.db import models
-from lessons.models import Lesson
+from courses.models import Course
 
 class MemoryGame(models.Model):
-    leccion = models.ForeignKey(Lesson, on_delete=models.CASCADE)
+    curso = models.ForeignKey(Course,  on_delete=models.CASCADE,related_name='memory_games' )
     nombre = models.CharField(max_length=100)
     posicion = models.CharField(max_length=20, choices=[('inicio', 'Inicio'), ('mitad', 'Mitad'), ('final', 'Final')])
     grid_size = models.CharField(max_length=10)
