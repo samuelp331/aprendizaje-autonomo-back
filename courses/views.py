@@ -92,7 +92,7 @@ class CourseListCreateView(generics.ListCreateAPIView):
 
 class MyCoursesListView(generics.ListAPIView):
     """Lista únicamente los cursos del profesor autenticado."""
-    serializer_class = CourseSerializer
+    serializer_class = CourseListSerializer
     permission_classes = [IsAuthenticated, IsProfessor]
     pagination_class = CoursesPagination
 

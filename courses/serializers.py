@@ -46,10 +46,11 @@ class CourseListSerializer(serializers.ModelSerializer):
     public_code = serializers.CharField(source='codigo')
     image = serializers.SerializerMethodField()
     title = serializers.CharField(source='titulo')
+    short_description = serializers.CharField(source='descripcion_corta')
+    long_description = serializers.CharField(source='descripcion_detallada')
     category = serializers.CharField(source='categoria')
     nivel = serializers.SerializerMethodField()
     duration = serializers.SerializerMethodField()
-    description = serializers.SerializerMethodField()
     professor = serializers.SerializerMethodField()
     is_subscribed = serializers.SerializerMethodField()
     lessons = serializers.SerializerMethodField()
@@ -61,10 +62,11 @@ class CourseListSerializer(serializers.ModelSerializer):
             'public_code',
             'image',
             'title',
+            'short_description',
+            'long_description',
             'category',
             'nivel',
             'duration',
-            'description',
             'professor',
             'is_subscribed',
             'lessons',
@@ -89,10 +91,6 @@ class CourseListSerializer(serializers.ModelSerializer):
         if obj.duracion is None:
             return ""
         return f"{obj.duracion} horas"
-
-    def get_description(self, obj: Course) -> str:
-        text = obj.descripcion_corta or ""
-        return text[:150]
 
     def get_image(self, obj: Course) -> str:
         url = obj.imagen_portada
