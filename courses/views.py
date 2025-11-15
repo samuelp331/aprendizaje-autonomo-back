@@ -102,13 +102,16 @@ class MyCoursesListView(generics.ListAPIView):
 
 class MyCoursesStudentListView(generics.ListAPIView):
     """Lista únicamente los cursos del estudiante autenticado."""
-    serializer_class = CourseSerializer
+    serializer_class = CourseListSerializer
     permission_classes = [IsAuthenticated, IsStudent]
     pagination_class = CoursesPagination
 
     def get_queryset(self):
         user = self.request.user
-        return Course.objects.filter(profesor=user).order_by('-created_at')
+        return Course.objects.filter(
+            subscriptions__user=user,
+            subscriptions__is_active=True,
+        ).order_by('-created_at').distinct()
 
 
 class CourseDetailView(generics.RetrieveAPIView):
