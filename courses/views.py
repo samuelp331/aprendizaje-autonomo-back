@@ -14,7 +14,7 @@ from .serializers import (
     CourseProgressSerializer,
     CourseSubscriptionSerializer,
 )
-from .permissions import IsProfessor
+from .permissions import IsProfessor, IsStudent
 from .utils import update_course_progress
 
 
@@ -94,6 +94,16 @@ class MyCoursesListView(generics.ListAPIView):
     """Lista únicamente los cursos del profesor autenticado."""
     serializer_class = CourseSerializer
     permission_classes = [IsAuthenticated, IsProfessor]
+    pagination_class = CoursesPagination
+
+    def get_queryset(self):
+        user = self.request.user
+        return Course.objects.filter(profesor=user).order_by('-created_at')
+
+class MyCoursesStudentListView(generics.ListAPIView):
+    """Lista únicamente los cursos del estudiante autenticado."""
+    serializer_class = CourseSerializer
+    permission_classes = [IsAuthenticated, IsStudent]
     pagination_class = CoursesPagination
 
     def get_queryset(self):
