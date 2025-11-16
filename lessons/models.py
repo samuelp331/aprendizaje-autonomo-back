@@ -21,13 +21,11 @@ class Lesson(models.Model):
     title = models.CharField(max_length=150)
     content = models.TextField(blank=True, null=True)
     file = models.TextField(blank=True, null=True, help_text="PDF en base64")
-    order = models.PositiveIntegerField(default=1)
     is_game_linked = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ['order']
-        unique_together = ('course', 'order') 
+        ordering = ['created_at']
 
     
     def clean(self):

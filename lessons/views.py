@@ -27,7 +27,7 @@ class LessonViewSet(viewsets.ModelViewSet):
 
         if course_id:
             qs = qs.filter(course_id=course_id)
-        return qs.order_by('order')
+        return qs.order_by('created_at')
 
     def perform_create(self, serializer):
         if getattr(self.request.user, 'rol', None) != '1':
