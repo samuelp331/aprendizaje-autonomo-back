@@ -103,7 +103,7 @@ class CourseListSerializer(serializers.ModelSerializer):
 
     def get_lessons(self, obj: Course):
         return list(
-            obj.lessons.all().order_by('order').values_list('id', flat=True)
+            obj.lessons.all().order_by('created_at').values_list('id', flat=True)
         )
 
 
@@ -180,17 +180,14 @@ class CourseDetailSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         is_subscribed = self._user_is_subscribed()
         items = []
-        for lesson in getattr(obj, 'lessons', []).all().order_by('order'):
+        for lesson in getattr(obj, 'lessons', []).all().order_by('created_at'):
             resource_url = ''
             if getattr(lesson, 'file', None) and is_subscribed:
-                resource_url = lesson.file.url
-                if request is not None:
-                    resource_url = request.build_absolute_uri(resource_url)
+                resource_url = lesson.file
             items.append({
                 'title': getattr(lesson, 'title', ''),
                 'content': (getattr(lesson, 'content', '') or '') if is_subscribed else '',
                 'duration': '',
-                'order': getattr(lesson, 'order', 0),
                 'is_game_linked': bool(getattr(lesson, 'is_game_linked', False)),
                 'resource_url': resource_url,
                 'locked': not is_subscribed,
@@ -224,7 +221,7 @@ class CourseProgressSerializer(serializers.ModelSerializer):
 
     def get_lessons(self, obj: CourseProgress):
         user = obj.user
-        lessons = obj.course.lessons.all().order_by('order')
+        lessons = obj.course.lessons.all().order_by('created_at')
         progress_map = {
             lp.lesson_id: lp
             for lp in LessonProgress.objects.filter(user=user, lesson__course=obj.course)
@@ -235,7 +232,6 @@ class CourseProgressSerializer(serializers.ModelSerializer):
             data.append({
                 'lesson_id': lesson.id,
                 'title': lesson.title,
-                'order': lesson.order,
                 'completed': lp.completed if lp else False,
                 'completed_at': lp.completed_at if lp else None,
             })

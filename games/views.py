@@ -6,9 +6,9 @@ from .serializers import MemoryGameSerializer, MemoryGamePairSerializer, GameWit
 import logging
 from django.db import transaction
 import traceback
-
+from  courses.models import Course
 logger = logging.getLogger(__name__)
-
+from django.shortcuts import get_object_or_404
 # ----------------------------------------------------
 # GET /memory-games/{id}
 # ----------------------------------------------------
@@ -130,7 +130,24 @@ class GetMemoryGameFull(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+class GetMemoryGameByCourseFull(APIView):
+    def get(self, request, public_code):
+        try:
+            course = get_object_or_404(Course, codigo=public_code)
+            game = MemoryGame.objects.get(curso=course)
+        
+        except MemoryGame.DoesNotExist:
+         return Response({"game": None, "pairs": []}, status=status.HTTP_200_OK)
 
+        except Exception:
+            return Response(
+                {"error": "Ocurrió un error interno al procesar la solicitud."}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+        serializer = GameWithPairsSerializer(game)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
 class AddPairsBulk(APIView):
     def post(self, request, game_id):
         try:
