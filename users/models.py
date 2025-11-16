@@ -7,7 +7,7 @@ class User(AbstractUser):
         ('2', 'Estudiante'),
     ]
     rol = models.CharField(max_length=1, choices=ROLE_CHOICES, default='2', db_column='role')
-    #estado_suscripcion = models.BooleanField(default=False, db_column='subscription_status')
+    #estado_suscripcion = models.BooleanField(default=False, db_column='subscription_status') 
     #fecha_inicio_suscripcion = models.DateField(null=True, blank=True, db_column='subscription_start_date')
     #fecha_fin_suscripcion = models.DateField(null=True, blank=True, db_column='subscription_end_date')
     intentos_fallidos = models.PositiveIntegerField(default=0, db_column='failed_attempts')
