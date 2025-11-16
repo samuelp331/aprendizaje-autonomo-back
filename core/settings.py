@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework.authtoken',
      # Apps del proyecto
     'users',
     'courses',
@@ -58,6 +59,18 @@ INSTALLED_APPS = [
     # librería CORS
     'corsheaders',
 ]
+
+# DRF global settings
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.BasicAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.AllowAny',
+    ],
+}
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
@@ -153,7 +166,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
-    "https://aprendizaje-autonomo-front.onrender.com",
+    "https://aprendizaje-autonomo-back.onrender.com",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
@@ -161,3 +174,9 @@ CSRF_TRUSTED_ORIGINS = [
     "http://127.0.0.1:5173",
     "https://aprendizaje-autonomo-front.onrender.com",
 ]
+
+# Permitir credenciales (cookies) con CORS para sesiones
+CORS_ALLOW_CREDENTIALS = True
+# Archivos multimedia (subidas de usuarios, PDFs, imágenes, etc.)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
